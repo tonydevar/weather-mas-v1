@@ -22,12 +22,142 @@ const forecastGrid = document.getElementById('forecastGrid');
 const historyList = document.getElementById('historyList');
 const searchHistory = document.getElementById('searchHistory');
 const forecast = document.getElementById('forecast');
+const suggestionsDropdown = document.getElementById('suggestionsDropdown');
+
+// Debounce utility function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
 
 // Event Listeners
 searchBtn.addEventListener('click', handleSearch);
 cityInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleSearch();
 });
+
+// Debounced input handler for autocomplete
+const handleInput = debounce(async (e) => {
+    const query = e.target.value.trim();
+    
+    if (query.length < 2) {
+        hideSuggestions();
+        return;
+    }
+    
+    await fetchSuggestions(query);
+}, 300);
+
+cityInput.addEventListener('input', handleInput);
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-container')) {
+        hideSuggestions();
+    }
+});
+
+// Show suggestions dropdown
+function showSuggestions() {
+    suggestionsDropdown.classList.add('active');
+}
+
+// Hide suggestions dropdown
+function hideSuggestions() {
+    suggestionsDropdown.classList.remove('active');
+}
+
+// Fetch city suggestions from Geocoding API
+async function fetchSuggestions(query) {
+    showLoadingSuggestions();
+    
+    try {
+        const response = await fetch(
+            `${BASE_GEO_URL}?q=${encodeURIComponent(query)}&limit=5&appid=${API_KEY}`
+        );
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch suggestions');
+        }
+        
+        const data = await response.json();
+        
+        if (!data || data.length === 0) {
+            showNoResults();
+            return;
+        }
+        
+        displaySuggestions(data);
+    } catch (error) {
+        showSuggestionsError('Unable to load suggestions');
+    }
+}
+
+// Display suggestions in dropdown
+function displaySuggestions(suggestions) {
+    suggestionsDropdown.innerHTML = '';
+    
+    suggestions.forEach(suggestion => {
+        const item = document.createElement('div');
+        item.className = 'suggestion-item';
+        
+        const cityName = suggestion.name;
+        const state = suggestion.state ? `${suggestion.state}, ` : '';
+        const country = suggestion.country;
+        
+        item.innerHTML = `
+            <div class="suggestion-city">${cityName}</div>
+            <div class="suggestion-detail">${state}${country}</div>
+        `;
+        
+        item.addEventListener('click', () => {
+            selectSuggestion(suggestion);
+        });
+        
+        suggestionsDropdown.appendChild(item);
+    });
+    
+    showSuggestions();
+    hideLoadingSuggestions();
+}
+
+// Handle suggestion selection
+function selectSuggestion(suggestion) {
+    const city = suggestion.name;
+    cityInput.value = city;
+    hideSuggestions();
+    fetchWeather(city);
+}
+
+// Show loading state in suggestions
+function showLoadingSuggestions() {
+    suggestionsDropdown.innerHTML = '<div class="suggestion-loading"><span class="loading-spinner"></span></div>';
+    showSuggestions();
+}
+
+// Hide loading state
+function hideLoadingSuggestions() {
+    // Loading is replaced by displaySuggestions
+}
+
+// Show no results message
+function showNoResults() {
+    suggestionsDropdown.innerHTML = '<div class="suggestion-empty">No cities found</div>';
+    showSuggestions();
+}
+
+// Show error in suggestions
+function showSuggestionsError(message) {
+    suggestionsDropdown.innerHTML = `<div class="suggestion-error">${message}</div>`;
+    showSuggestions();
+}
 
 // Load last searched city on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -45,6 +175,7 @@ async function handleSearch() {
         showError('Please enter a city name');
         return;
     }
+    hideSuggestions();
     await fetchWeather(city);
 }
 

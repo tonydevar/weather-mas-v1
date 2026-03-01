@@ -1,8 +1,8 @@
-// Weather Dashboard Application
-
-// API Configuration - Using Open-Meteo (free, no API key required)
-const GEO_API_URL = 'https://geocoding-api.open-meteo.com/v1/search';
-const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast';
+// OpenWeatherMap API Configuration
+// Note: Replace with your own API key from https://openweathermap.org/api
+const API_KEY = '4d8fb5b93d4af21d66a2948710284366';
+const BASE_GEO_URL = 'https://api.openweathermap.org/geo/1.0/direct';
+const BASE_FORECAST_URL = 'https://api.openweathermap.org/data/2.5/forecast';
 
 // DOM Elements
 const cityInput = document.getElementById('cityInput');
@@ -10,8 +10,7 @@ const searchBtn = document.getElementById('searchBtn');
 const errorMessage = document.getElementById('errorMessage');
 const loading = document.getElementById('loading');
 const weatherContent = document.getElementById('weatherContent');
-
-// Current Weather Elements
+const currentWeather = document.getElementById('currentWeather');
 const cityName = document.getElementById('cityName');
 const currentDate = document.getElementById('currentDate');
 const weatherIcon = document.getElementById('weatherIcon');
@@ -19,15 +18,10 @@ const temp = document.getElementById('temp');
 const humidity = document.getElementById('humidity');
 const windSpeed = document.getElementById('windSpeed');
 const description = document.getElementById('description');
-
-// Forecast Elements
 const forecastGrid = document.getElementById('forecastGrid');
-
-// Search History
 const historyList = document.getElementById('historyList');
-
-// State
-let searchHistory = JSON.parse(localStorage.getItem('weatherSearchHistory')) || [];
+const searchHistory = document.getElementById('searchHistory');
+const forecast = document.getElementById('forecast');
 
 // Event Listeners
 searchBtn.addEventListener('click', handleSearch);
@@ -35,15 +29,16 @@ cityInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') handleSearch();
 });
 
-// Initialize
+// Load last searched city on page load
 document.addEventListener('DOMContentLoaded', () => {
-    loadSearchHistory();
-    const lastCity = localStorage.getItem('lastSearchedCity');
+    const lastCity = localStorage.getItem('lastCity');
     if (lastCity) {
+        cityInput.value = lastCity;
         fetchWeather(lastCity);
     }
 });
 
+// Main search handler
 async function handleSearch() {
     const city = cityInput.value.trim();
     if (!city) {
@@ -53,13 +48,16 @@ async function handleSearch() {
     await fetchWeather(city);
 }
 
+// Fetch weather data from OpenWeatherMap
 async function fetchWeather(city) {
     showLoading();
     hideError();
-
+    
     try {
-        // First, get coordinates from city name
-        const geoResponse = await fetch(`${GEO_API_URL}?name=${encodeURIComponent(city)}&count=1&language=en&format=json`);
+        // Step 1: Get coordinates from Geocoding API
+        const geoResponse = await fetch(
+            `${BASE_GEO_URL}?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`
+        );
         
         if (!geoResponse.ok) {
             throw new Error('Failed to fetch location data');
@@ -67,30 +65,30 @@ async function fetchWeather(city) {
         
         const geoData = await geoResponse.json();
         
-        if (!geoData.results || geoData.results.length === 0) {
-            throw new Error('City not found. Please try a different search.');
+        if (!geoData || geoData.length === 0) {
+            throw new Error('City not found');
         }
         
-        const location = geoData.results[0];
-        const { latitude, longitude, name, country } = location;
-
-        // Now get weather data
-        const weatherResponse = await fetch(
-            `${WEATHER_API_URL}?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,relative_humidity_2m_max&timezone=auto&forecast_days=6`
+        const { lat, lon, name } = geoData[0];
+        
+        // Step 2: Get forecast data from 5 Day / 3 Hour Forecast API
+        const forecastResponse = await fetch(
+            `${BASE_FORECAST_URL}?lat=${lat}&lon=${lon}&units=metric&appid=${API_KEY}`
         );
-
-        if (!weatherResponse.ok) {
+        
+        if (!forecastResponse.ok) {
             throw new Error('Failed to fetch weather data');
         }
-
-        const weatherData = await weatherResponse.json();
         
-        displayCurrentWeather(weatherData.current, name, country);
-        displayForecast(weatherData.daily);
+        const forecastData = await forecastResponse.json();
+        
+        // Process and display data
+        displayCurrentWeather(forecastData, name);
+        displayForecast(forecastData);
         addToHistory(name);
         
-        // Save last searched city
-        localStorage.setItem('lastSearchedCity', name);
+        // Save to localStorage
+        localStorage.setItem('lastCity', name);
         
         hideLoading();
     } catch (error) {
@@ -99,74 +97,111 @@ async function fetchWeather(city) {
     }
 }
 
-function displayCurrentWeather(current, city, country) {
-    cityName.textContent = `${city}, ${country}`;
-    currentDate.textContent = formatDate(new Date());
-    temp.textContent = Math.round(current.temperature_2m);
-    humidity.textContent = `${current.relative_humidity_2m}%`;
-    windSpeed.textContent = `${current.wind_speed_10m} km/h`;
+// Display current weather
+function displayCurrentWeather(data, city) {
+    const current = data.list[0];
+    const weather = current.weather[0];
     
-    const weatherCode = current.weather_code;
-    const weatherInfo = getWeatherInfo(weatherCode);
-    description.textContent = weatherInfo.description;
-    weatherIcon.src = weatherInfo.icon;
-    weatherIcon.alt = weatherInfo.description;
+    cityName.textContent = city;
+    currentDate.textContent = formatDate(new Date(current.dt * 1000));
+    temp.textContent = Math.round(current.main.temp);
+    humidity.textContent = `${current.main.humidity}%`;
+    windSpeed.textContent = `${current.wind.speed} m/s`;
+    description.textContent = weather.description;
+    
+    weatherIcon.src = `https://openweathermap.org/img/wn/${weather.icon}@2x.png`;
+    weatherIcon.alt = weather.description;
+    
+    weatherContent.style.display = 'block';
 }
 
-function displayForecast(daily) {
+// Display 5-day forecast - filter for ~12:00 PM entries
+function displayForecast(data) {
+    const forecasts = data.list;
+    const dailyForecasts = [];
+    const seenDates = new Set();
+    
+    // Filter for entries around 12:00 PM (11:00 - 14:00) to get one per day
+    for (const forecast of forecasts) {
+        const date = new Date(forecast.dt * 1000);
+        const hours = date.getHours();
+        const dateStr = date.toISOString().split('T')[0];
+        
+        // Check if it's around noon (11:00 - 14:00) and we haven't seen this date
+        if (hours >= 11 && hours <= 14 && !seenDates.has(dateStr)) {
+            seenDates.add(dateStr);
+            dailyForecasts.push(forecast);
+        }
+    }
+    
+    // If we don't have 5 days yet, fill in with the first available entries
+    if (dailyForecasts.length < 5) {
+        for (const forecast of forecasts) {
+            if (dailyForecasts.length >= 5) break;
+            const dateStr = new Date(forecast.dt * 1000).toISOString().split('T')[0];
+            if (!seenDates.has(dateStr)) {
+                seenDates.add(dateStr);
+                dailyForecasts.push(forecast);
+            }
+        }
+    }
+    
+    // Limit to 5 days
+    const fiveDays = dailyForecasts.slice(0, 5);
+    
     forecastGrid.innerHTML = '';
     
-    const times = daily.time;
-    const weatherCodes = daily.weather_code;
-    const maxTemps = daily.temperature_2m_max;
-    const minTemps = daily.temperature_2m_min;
-    const humidities = daily.relative_humidity_2m_max;
-
-    // Skip today (index 0), show next 5 days
-    for (let i = 1; i <= 5; i++) {
-        const date = new Date(times[i]);
-        const weatherCode = weatherCodes[i];
-        const weatherInfo = getWeatherInfo(weatherCode);
+    fiveDays.forEach(day => {
+        const date = new Date(day.dt * 1000);
+        const weather = day.weather[0];
         
         const card = document.createElement('div');
         card.className = 'forecast-card';
         card.innerHTML = `
-            <div class="day">${formatDay(date)}</div>
-            <img class="icon" src="${weatherInfo.icon}" alt="${weatherInfo.description}">
-            <div class="temp">${Math.round(maxTemps[i])}°C</div>
-            <div class="humidity"><i class="fas fa-tint"></i> ${humidities[i]}%</div>
+            <div class="day-name">${formatDay(date)}</div>
+            <div class="date-label">${date.getDate()} ${date.toLocaleString('default', { month: 'short' })}</div>
+            <img src="https://openweathermap.org/img/wn/${weather.icon}.png" alt="${weather.description}">
+            <div class="temp">${Math.round(day.main.temp)}°C</div>
+            <div class="humidity"><i class="fas fa-tint"></i> ${day.main.humidity}%</div>
         `;
         
         forecastGrid.appendChild(card);
-    }
+    });
+    
+    forecast.style.display = 'block';
 }
 
+// Add city to search history
 function addToHistory(city) {
+    let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+    
     // Remove if already exists
-    searchHistory = searchHistory.filter(c => c.toLowerCase() !== city.toLowerCase());
+    history = history.filter(c => c.toLowerCase() !== city.toLowerCase());
     
-    // Add to front
-    searchHistory.unshift(city);
+    // Add to beginning
+    history.unshift(city);
     
-    // Keep only last 10
-    searchHistory = searchHistory.slice(0, 10);
+    // Keep only last 5
+    history = history.slice(0, 5);
     
-    // Save to localStorage
-    localStorage.setItem('weatherSearchHistory', JSON.stringify(searchHistory));
-    
-    loadSearchHistory();
+    localStorage.setItem('searchHistory', JSON.stringify(history));
+    displayHistory();
 }
 
-function loadSearchHistory() {
-    historyList.innerHTML = '';
+// Display search history
+function displayHistory() {
+    const history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
     
-    if (searchHistory.length === 0) {
-        historyList.innerHTML = '<span class="history-item">No recent searches</span>';
+    if (history.length === 0) {
+        searchHistory.style.display = 'none';
         return;
     }
     
-    searchHistory.forEach(city => {
-        const item = document.createElement('span');
+    searchHistory.style.display = 'block';
+    historyList.innerHTML = '';
+    
+    history.forEach(city => {
+        const item = document.createElement('div');
         item.className = 'history-item';
         item.textContent = city;
         item.addEventListener('click', () => {
@@ -177,20 +212,39 @@ function loadSearchHistory() {
     });
 }
 
-// Helper Functions
-function getWeatherInfo(code) {
-    const weatherMap = {
-        0: { description: 'Clear sky', icon: 'https://openweathermap.org/img/wn/01d@2x.png' },
-        1: { description: 'Mainly clear', icon: 'https://openweathermap.org/img/wn/01d@2x.png' },
-        2: { description: 'Partly cloudy', icon: 'https://openweathermap.org/img/wn/02d@2x.png' },
-        3: { description: 'Overcast', icon: 'https://openweathermap.org/img/wn/03d@2x.png' },
-        45: { description: 'Foggy', icon: 'https://openweathermap.org/img/wn/50d@2x.png' },
-        48: { description: 'Foggy', icon: 'https://openweathermap.org/img/wn/50d@2x.png' },
-        51: { description: 'Light drizzle', icon: 'https://openweathermap.org/img/wn/09d@2x.png' },
-        53: { description: 'Moderate drizzle', icon: 'https://openweathermap.org/img/wn/09d@2x.png' },
-        55: { description: 'Dense drizzle', icon: 'https://openweathermap.org/img/wn/09d@2x.png' },
-        61: { description: 'Slight rain', icon: 'https://openweathermap.org/img/wn/10d@2x.png' },
-        63: { description: 'Moderate rain', icon: 'https://openweathermap.org/img/wn/10d@2x.png' },
-        65: { description: 'Heavy rain', icon: 'https://openweathermap.org/img/wn/10d@2x.png' },
-        71: { description: 'Slight snow', icon: 'https://openweathermap.org/img/wn/13d@2x.png' },
-        73: { description: 'Moderate snow', icon: 'https://openweatherma}
+// Utility: Format date for display
+function formatDate(date) {
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-US', options);
+}
+
+// Utility: Format day name
+function formatDay(date) {
+    return date.toLocaleDateString('en-US', { weekday: 'short' });
+}
+
+// Utility: Show error message
+function showError(message) {
+    errorMessage.textContent = message;
+    errorMessage.classList.remove('hidden');
+    weatherContent.style.display = 'none';
+}
+
+// Utility: Hide error message
+function hideError() {
+    errorMessage.classList.add('hidden');
+}
+
+// Utility: Show loading spinner
+function showLoading() {
+    loading.classList.remove('hidden');
+    weatherContent.style.display = 'none';
+}
+
+// Utility: Hide loading spinner
+function hideLoading() {
+    loading.classList.add('hidden');
+}
+
+// Initialize history display on load
+displayHistory();

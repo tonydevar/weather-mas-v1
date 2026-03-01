@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-box">
+                <input type="text" id="cityInput" placeholder="Enter city name..." autocomplete="off">
+                <button id="searchBtn">Search</button>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <div class="main-content" id="mainContent">
+            <!-- Loading State -->
+            <div class="loading" id="loading" style="display: none;">
+                <div class="spinner"></div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" id="emptyState">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                </svg>
+                <h2>Search for a city</h2>
+                <p>Enter a city name to see the weather forecast</p>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage" style="display: none;"></div>
+
+            <!-- Current Weather -->
+            <section class="current-weather" id="currentWeather" style="display: none;">
+                <div class="current-weather-header">
+                    <div class="city-info">
+                        <h2 id="cityName"></h2>
+                        <div class="date" id="currentDate"></div>
+                    </div>
+                    <div class="weather-icon">
+                        <img id="weatherIcon" src="" alt="Weather icon">
+                    </div>
+                </div>
+                <div class="current-temp">
+                    <span id="temperature"></span><span>°C</span>
+                </div>
+                <div class="weather-description" id="weatherDescription"></div>
+                <div class="weather-details">
+                    <div class="detail-item">
+                        <div class="label">Humidity</div>
+                        <div class="value" id="humidity"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Wind Speed</div>
+                        <div class="value" id="windSpeed"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Feels Like</div>
+                        <div class="value" id="feelsLike"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Pressure</div>
+                        <div class="value" id="pressure"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5-Day Forecast -->
+            <section class="forecast-section" id="forecastSection" style="display: none;">
+                <h3>5-Day Forecast</h3>
+                <div class="forecast-grid" id="forecastGrid"></div>
+            </section>
+
+            <!-- Search History -->
+            <section class="history-section" id="historySection" style="display: none;">
+                <h3>Recent Searches</h3>
+                <div class="history-list" id="historyList"></div>
+            </section>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

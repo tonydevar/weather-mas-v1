@@ -1,49 +1,35 @@
-# Technical Specification: Weather Dashboard App
+# Technical Specification: City Search Autocomplete
 
-## Project Overview
-A modern, responsive web-based Weather Dashboard that allows users to search for a city and view current weather conditions along with a 5-day forecast. The app will consume data from a public weather API (OpenWeatherMap) and provide a clean, glassmorphism-inspired interface.
+## Overview
+This feature adds a real-time city search autocomplete to the Weather app. It will provide users with a list of suggestions as they type in the search bar, improving user experience and reducing errors in city name entry.
 
 ## Features
-- **City Search**: Input field to search for weather by city name.
-- **Current Weather Display**:
-    - City Name & Date
-    - Temperature (Celsius)
-    - Humidity (%)
-    - Wind Speed (m/s or km/h)
-    - Weather Icon (e.g., sunny, rainy, cloudy)
-- **5-Day Forecast**:
-    - A row of cards showing the forecast for the next 5 days.
-    - Each card includes: Date, Icon, Temp, and Humidity.
-- **Search History**: List of recently searched cities that are clickable to re-fetch weather.
-- **Persistent State**: Save the last searched city in `localStorage` to load on refresh.
+- Dynamic dropdown list appearing below the search input.
+- Real-time filtering based on user input.
+- Selection of a city from the list updates the search field and triggers a weather lookup.
+- 'Debounced' API calls to Geocoding service to minimize unnecessary network traffic.
 
-## Tech Stack
-- **Frontend**: HTML5, CSS3 (Modern/Glassmorphism), Vanilla JavaScript (ES6+).
-- **API**: [OpenWeatherMap Geocoding API](https://openweathermap.org/api/geocoding-api) and [5 Day / 3 Hour Forecast API](https://openweathermap.org/forecast5).
-- **Deployment**: GitHub Pages.
+## File Structure & Tech Stack
+- **HTML**: `index.html` (update to include a container for suggestions).
+- **CSS**: `style.css` (UI for the dropdown menu).
+- **JS**: `app.js` (logic for fetching and display suggestions).
+- **API**: [OpenWeatherMap Geocoding API](https://openweathermap.org/api/geocoding-api) or similar.
 
-## File Structure
-```
-weather-mas-v1/
-├── index.html      # Main entry point
-├── style.css       # Provided by UX Agent
-├── app.js         # Logic for API calls and DOM manipulation
-├── README.md       # Project documentation
-└── spec.md         # This specification
-```
-
-## Data Model (OpenWeatherMap)
-- **Current/Forecast Data**: Extracted from the `list` array in the 5-day forecast response (filtering for ~12:00 PM slots for the daily forecast).
-- **Icons**: Derived from `weather[0].icon` mapping to OpenWeatherMap icon URLs.
+## Data Model
+`Suggestion` object:
+- `name`: City name
+- `state`: State/Province (optional)
+- `country`: Country code
+- `lat`: Latitude
+- `lon`: Longitude
 
 ## Edge Cases
-- **Invalid City**: Show an error message if the city is not found.
-- **Network Error**: Handle API failure gracefully.
-- **Empty Input**: Prevent search if the input field is empty.
-- **API Key**: Use a placeholder or a provided key (implementation should allow easy replacement).
+- No results found: Display "No cities found".
+- Network errors: Gracefully hide suggestions and allow manual entry.
+- Rapid typing: Debounce input for 300ms.
+- Keyboard navigation: (Optional/Future) support arrow keys to select.
 
 ## Testing Criteria
-1.  Searching for "London" displays current stats and 5 distinct forecast cards.
-2.  Clicking a city in the search history updates the dashboard.
-3.  The layout is responsive on mobile and desktop.
-4.  Refreshing the page loads the last searched city's data.
+- Typing "Lon" should suggest "London, GB", "London, ON, CA", etc.
+- Clicking a suggestion should populate the search box and load weather.
+- Emptying the search box should hide the suggestions.

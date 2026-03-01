@@ -17,9 +17,10 @@
         <div class="search-container">
             <div class="search-box">
                 <i class="fas fa-search search-icon"></i>
-                <input type="text" class="search-input" id="cityInput" placeholder="Enter city name...">
+                <input type="text" class="search-input" id="cityInput" placeholder="Enter city name..." autocomplete="off">
             </div>
             <button class="search-btn" id="searchBtn">Search</button>
+            <div class="suggestions-dropdown" id="suggestionsDropdown"></div>
         </div>
 
         <div id="errorMessage" class="error-message hidden"></div>

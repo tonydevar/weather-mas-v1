@@ -1,66 +1,87 @@
-# Weather Dashboard - Design Notes
+# Design Notes: City Search Autocomplete
 
 ## Overview
-Modern glassmorphism design for a weather dashboard application with a dark gradient background and frosted glass card effects.
+This document outlines the UI/UX design decisions for the city search autocomplete feature in the Weather app.
 
-## Visual Style
+## Design Philosophy
+- **Glassmorphism**: Modern frosted-glass aesthetic with subtle transparency and blur effects
+- **Minimal & Clean**: Focus on clarity with generous whitespace and clear visual hierarchy
+- **Responsive**: Adapts seamlessly across all device sizes
+- **Accessible**: High contrast support and reduced motion preferences
+
+## Visual Design
 
 ### Color Palette
-- **Background**: Deep blue gradient (#1a1a2e → #16213e → #0f3460)
-- **Glass Effect**: Semi-transparent white (8% opacity) with blur
-- **Accent Colors**:
-  - Cyan (#00d4ff) for interactive elements
-  - Orange (#ff6b35) for wind indicators
-  - Yellow (#ffd93d) for temperature
-- **Text**: White primary, 70% white secondary, 50% white muted
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--glass-bg` | `rgba(255, 255, 255, 0.12)` | Input/dropdown background |
+| `--glass-border` | `rgba(255, 255, 255, 0.18)` | Borders |
+| `--accent-primary` | `#6dd5ed` | Primary accent (cyan) |
+| `--accent-secondary` | `#2193b0` | Secondary accent (teal) |
+| `--text-primary` | `#ffffff` | Main text |
+| `--text-secondary` | `rgba(255, 255, 255, 0.7)` | Secondary text (city details) |
 
 ### Typography
-- Font: Segoe UI (system fallback: -apple-system, BlinkMacSystemFont)
-- Title: 2.5rem bold with gradient text
-- Temperature: 4rem bold in accent yellow
-- Body: 1rem, line-height 1.6
+- **Font Family**: Inter (system fallback: -apple-system, Segoe UI, Roboto)
+- **Search Input**: 1.25rem (20px)
+- **City Name**: 1rem (16px), font-weight 500
+- **City Detail**: 0.875rem (14px)
 
-### Components
+### Spacing System
+- Base unit: 4px
+- Input padding: 16px horizontal, 16px vertical
+- Dropdown item padding: 16px
+- Gap between city name and detail: 4px
 
-#### Search Box
-- Full-width input with left icon
-- Glass background with border
-- Cyan glow on focus
-- Rounded corners (24px)
+## Components
 
-#### Weather Cards
-- Frosted glass effect (backdrop-filter: blur)
-- Subtle border (15% white)
-- Hover: slight lift and glow
+### Search Input
+- Full-width with glassmorphism effect
+- Blur backdrop (10px)
+- Focus state: elevated border glow with accent color
+- Placeholder: "Search for a city..."
 
-#### Current Weather
-- Large animated weather icon (bounce)
-- City name and date
-- Large temperature display
-- Grid of details: humidity, wind, conditions
+### Suggestions Dropdown
+- Appears below search input with 8px gap
+- Max height: 320px with custom scrollbar
+- Backdrop blur (16px) for depth
+- Smooth fade-in + slide animation on show
 
-#### Forecast Cards
-- 5-card horizontal grid
-- Each shows: day, icon, temp, humidity
-- Hover: lift effect with cyan border
+### Suggestion Item
+- Hover: subtle background lighten
+- Selected: accent-tinted background
+- Staggered fade-in animation (30ms delay per item)
+- City name + detail (state/country) layout
 
-#### Search History
-- Pill-shaped clickable items
-- Hover: cyan highlight
+### States
+| State | Visual |
+|-------|--------|
+| Default | Glass background, subtle border |
+| Loading | Spinner icon centered |
+| Empty | "No cities found" muted text |
+| Error | Red-tinted error message |
+| Hover | Background lightens |
+| Selected | Accent-tinted background |
 
 ## Animations
-- **Page Load**: Staggered fadeInUp (header → search → current → forecast → history)
-- **Weather Icon**: Gentle bounce (2s loop)
-- **Error**: Shake animation
-- **Hover**: Transform and shadow transitions
+- **Dropdown**: 250ms fade + translateY
+- **Items**: Staggered fade-in (30ms intervals)
+- **Focus**: Smooth border/shadow transition (250ms)
+- **Reduced Motion**: Respects `prefers-reduced-motion`
 
 ## Responsive Breakpoints
-- **Desktop** (>768px): Full 5-day forecast
-- **Tablet** (768px): 3-day forecast
-- **Mobile** (480px): 2-day forecast, stacked layout
+- **Mobile (<600px)**: Smaller padding, compact dropdown
+- **High Contrast**: Darker backgrounds for visibility
+- All breakpoints maintain glassmorphism aesthetic
+
+## Accessibility
+- Keyboard navigation ready (visual states only; JS handles selection)
+- `prefers-reduced-motion` respected
+- `prefers-contrast: high` supported
+- Clear visual feedback for all interactive states
 
 ## Implementation Notes
-- Uses CSS custom properties for theming
-- Mobile-first approach with progressive enhancement
-- Smooth 60fps animations using transform/opacity
-- Accessible focus states on all interactive elements
+- CSS custom properties for easy theming
+- `-webkit-backdrop-filter` for Safari support
+- Custom scrollbar styling (WebKit only)
+- No external dependencies beyond Inter font

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-cloud-sun"></i> Weather Dashboard</h1>
+            <p class="subtitle">Check the weather in your city</p>
+        </header>
+
+        <div class="search-container">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" id="cityInput" placeholder="Enter city name...">
+            </div>
+            <button class="search-btn" id="searchBtn">Search</button>
+        </div>
+
+        <div id="errorMessage" class="error-message hidden"></div>
+
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+        </div>
+
+        <div id="weatherContent">
+            <section class="current-weather glass-card" id="currentWeather">
+                <div class="weather-main">
+                    <img class="weather-icon" id="weatherIcon" src="" alt="Weather Icon">
+                    <div class="weather-info">
+                        <h2 id="cityName"></h2>
+                        <p class="date" id="currentDate"></p>
+                    </div>
+                    <div class="temperature">
+                        <span id="temp"></span><span>°C</span>
+                    </div>
+                </div>
+                <div class="weather-details">
+                    <div class="detail-item">
+                        <div class="label">Humidity</div>
+                        <div class="value humidity" id="humidity"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Wind Speed</div>
+                        <div class="value wind" id="windSpeed"></div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="label">Description</div>
+                        <div class="value" id="description"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="forecast" id="forecast">
+                <h3>5-Day Forecast</h3>
+                <div class="forecast-grid" id="forecastGrid"></div>
+            </section>
+
+            <section class="search-history" id="searchHistory">
+                <h3>Recent Searches</h3>
+                <div class="history-list" id="historyList"></div>
+            </section>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

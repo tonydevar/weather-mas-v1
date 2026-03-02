@@ -1,87 +1,61 @@
-# Design Notes: City Search Autocomplete
+# Weather App Design Specification
 
 ## Overview
-This document outlines the UI/UX design decisions for the city search autocomplete feature in the Weather app.
+Glassmorphism-based weather dashboard with autocomplete city search.
 
-## Design Philosophy
-- **Glassmorphism**: Modern frosted-glass aesthetic with subtle transparency and blur effects
-- **Minimal & Clean**: Focus on clarity with generous whitespace and clear visual hierarchy
-- **Responsive**: Adapts seamlessly across all device sizes
-- **Accessible**: High contrast support and reduced motion preferences
-
-## Visual Design
+## Design System
 
 ### Color Palette
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--glass-bg` | `rgba(255, 255, 255, 0.12)` | Input/dropdown background |
-| `--glass-border` | `rgba(255, 255, 255, 0.18)` | Borders |
-| `--accent-primary` | `#6dd5ed` | Primary accent (cyan) |
-| `--accent-secondary` | `#2193b0` | Secondary accent (teal) |
-| `--text-primary` | `#ffffff` | Main text |
-| `--text-secondary` | `rgba(255, 255, 255, 0.7)` | Secondary text (city details) |
+- **Primary Gradient**: `#6dd5ed` → `#2193b0` (aqua blue gradient)
+- **Glass Background**: `rgba(255, 255, 255, 0.12)`
+- **Glass Border**: `rgba(255, 255, 255, 0.18)`
+- **Text Primary**: `#ffffff`
+- **Text Secondary**: `rgba(255, 255, 255, 0.7)`
+- **Accent**: `#6dd5ed`
 
 ### Typography
-- **Font Family**: Inter (system fallback: -apple-system, Segoe UI, Roboto)
-- **Search Input**: 1.25rem (20px)
-- **City Name**: 1rem (16px), font-weight 500
-- **City Detail**: 0.875rem (14px)
+- **Font Family**: Inter (system fallback: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto)
+- **Headings**: 1.5rem - 2rem, weight 600
+- **Body**: 1rem, weight 400
+- **Small/Labels**: 0.875rem
 
-### Spacing System
-- Base unit: 4px
-- Input padding: 16px horizontal, 16px vertical
-- Dropdown item padding: 16px
-- Gap between city name and detail: 4px
+### Visual Effects
+- **Glassmorphism**: `backdrop-filter: blur(10px)` on cards
+- **Shadows**: `0 8px 32px rgba(0, 0, 0, 0.15)`
+- **Borders**: 1px solid with 0.18 opacity white
+- **Border Radius**: 8px (sm), 12px (md), 16px (lg)
+- **Animations**: Fade-in with staggered delays (30ms intervals)
 
 ## Components
 
-### Search Input
-- Full-width with glassmorphism effect
-- Blur backdrop (10px)
-- Focus state: elevated border glow with accent color
-- Placeholder: "Search for a city..."
+### Header
+- Centered layout with icon + title
+- Subtitle in secondary text color
 
-### Suggestions Dropdown
-- Appears below search input with 8px gap
-- Max height: 320px with custom scrollbar
-- Backdrop blur (16px) for depth
-- Smooth fade-in + slide animation on show
+### Search Box
+- Glass-styled input with search icon
+- Integrated search button
+- Autocomplete dropdown with blur effect
 
-### Suggestion Item
-- Hover: subtle background lighten
-- Selected: accent-tinted background
-- Staggered fade-in animation (30ms delay per item)
-- City name + detail (state/country) layout
+### Current Weather Card
+- Large weather icon
+- City name + date
+- Temperature (large display)
+- Grid of details (humidity, wind, description)
 
-### States
-| State | Visual |
-|-------|--------|
-| Default | Glass background, subtle border |
-| Loading | Spinner icon centered |
-| Empty | "No cities found" muted text |
-| Error | Red-tinted error message |
-| Hover | Background lightens |
-| Selected | Accent-tinted background |
+### Forecast Section
+- Grid of 5-day forecast cards
+- Hover lift effect on cards
 
-## Animations
-- **Dropdown**: 250ms fade + translateY
-- **Items**: Staggered fade-in (30ms intervals)
-- **Focus**: Smooth border/shadow transition (250ms)
-- **Reduced Motion**: Respects `prefers-reduced-motion`
+### Search History
+- Pill-shaped history items
+- Hover highlight effect
 
 ## Responsive Breakpoints
-- **Mobile (<600px)**: Smaller padding, compact dropdown
-- **High Contrast**: Darker backgrounds for visibility
-- All breakpoints maintain glassmorphism aesthetic
+- **Mobile** (< 600px): Single column, stacked search button
+- **Desktop** (> 600px): Full layout with side-by-side elements
 
 ## Accessibility
-- Keyboard navigation ready (visual states only; JS handles selection)
-- `prefers-reduced-motion` respected
-- `prefers-contrast: high` supported
-- Clear visual feedback for all interactive states
-
-## Implementation Notes
-- CSS custom properties for easy theming
-- `-webkit-backdrop-filter` for Safari support
-- Custom scrollbar styling (WebKit only)
-- No external dependencies beyond Inter font
+- High contrast mode support
+- Reduced motion support
+- Proper focus states with accent color ring
